@@ -40,6 +40,8 @@ namespace Conesoft.LetsEncrypt
 
             var results = await Task.WhenAll(challenges.Select(async c => await c.Validate()));
 
+            await Task.Delay(TimeSpan.FromSeconds(5));
+
             var privateKey = KeyFactory.NewKey(KeyAlgorithm.ES256);
             var certificate = await order.Generate(new CsrInfo
             {
