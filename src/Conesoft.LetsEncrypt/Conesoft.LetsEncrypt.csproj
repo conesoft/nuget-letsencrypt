@@ -12,8 +12,8 @@
 
   <ItemGroup>
     <PackageReference Include="Certes" Version="2.3.4" />
-    <PackageReference Include="Conesoft.DNSimple" Version="1.0.3" />
-    <PackageReference Include="Conesoft.Files" Version="1.0.10" />
+    <PackageReference Include="Conesoft.DNSimple" Version="1.0.6" />
+    <PackageReference Include="Conesoft.Files" Version="1.0.11" />
   </ItemGroup>
 
 </Project>

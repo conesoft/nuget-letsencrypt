@@ -11,12 +11,16 @@ namespace Conesoft.LetsEncrypt
 {
     public class Client
     {
+        const string acmeChallengeDnsName = "_acme-challenge";
+
         readonly string mail;
         readonly bool production;
         readonly Func<HttpClient> httpClientGenerator;
+
         readonly string dnsimpleToken;
         readonly Directory rootPath;
         AcmeContext? acme;
+        Account? dnsimple;
 
         Uri Server => production ? WellKnownServers.LetsEncryptV2 : WellKnownServers.LetsEncryptStagingV2;
 
@@ -29,20 +33,26 @@ namespace Conesoft.LetsEncrypt
             this.rootPath = Directory.From(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)) / "Conesoft.LetsEncrypt";
         }
 
-        public async Task<string> CreateWildcardCertificateFor(string domain, string certificatePassword, CertificateInformation information)
+        public async Task<byte[]> CreateWildcardCertificateFor(string[] domains, string certificatePassword, CertificateInformation information)
         {
             await Login();
-            var order = await acme!.NewOrder(new[] { domain, $"*.{domain}" });
+
+            var order = await acme!.NewOrder(domains.SelectMany(domain => new[] { domain, $"*.{domain}" }).ToArray());
+
             var authorizations = (await order.Authorizations()).ToArray();
+
             var challenges = await Task.WhenAll(authorizations.Select(async a => await a.Dns()));
 
-            await UpdateDns(domain, (domain, index) => acme.AccountKey.DnsTxt(challenges[index].Token));
+            await AddDnsChallenges(domains, challenges.Select(challenge => acme.AccountKey.DnsTxt(challenge.Token)).ToArray());
+
+            await Task.Delay(TimeSpan.FromSeconds(1));
 
             var results = await Task.WhenAll(challenges.Select(async c => await c.Validate()));
 
-            await Task.Delay(TimeSpan.FromSeconds(5));
-
+            await CleanupDnsChallenges(domains);
+            
             var privateKey = KeyFactory.NewKey(KeyAlgorithm.ES256);
+
             var certificate = await order.Generate(new CsrInfo
             {
                 CountryName = information.CountryName,
@@ -50,16 +60,12 @@ namespace Conesoft.LetsEncrypt
                 Locality = information.Locality,
                 Organization = information.Organization,
                 OrganizationUnit = information.OrganizationUnit,
-                CommonName = domain
+                CommonName = domains.First()
             }, privateKey);
 
-            var certificateFile = rootPath / "Certificates" / (production ? "Production" : "Development") / File.Name(domain, "pfx");
+            var pfx = certificate.ToPfx(privateKey).Build(string.Join(' ', domains), certificatePassword);
 
-            var pfx = certificate.ToPfx(privateKey).Build(domain, certificatePassword);
-
-            await certificateFile.WriteBytes(pfx);
-
-            return certificateFile.Path;
+            return pfx;
         }
 
         async Task Login()
@@ -82,23 +88,41 @@ namespace Conesoft.LetsEncrypt
                     this.acme = new AcmeContext(Server, KeyFactory.FromPem(await accountFile.ReadText()), acmeHttpClient);
                 }
             }
+            if(this.dnsimple == null)
+            {
+                var client = new DNSimple.Client(httpClientGenerator());
+
+                client.UseToken(dnsimpleToken);
+
+                this.dnsimple = await client.GetAccount(mail);
+            }
         }
 
-        async Task UpdateDns(string domain, Func<string, int, string> challenge)
+        async Task AddDnsChallenges(string[] domains, string[] challenges)
         {
-            var dnsimple = new DNSimple.Client(httpClientGenerator());
-
-            dnsimple.UseToken(dnsimpleToken);
-            var dnsimpleAccount = await dnsimple.GetAccount(mail);
-            var zone = await dnsimpleAccount.GetZone(domain);
-
-            var records = (await zone.GetRecords()).Where(r => r.Type == RecordType.TXT.Type).ToArray();
-
-            for (var i = 0; i < 2; i++)
+            foreach(var domain in domains)
             {
-                var record = records[i];
+                var zone = await dnsimple!.GetZone(domain);
 
-                await record.UpdateContent(challenge(domain, i));
+                foreach(var challenge in challenges)
+                {
+                    await zone.AddRecord(RecordType.TXT, acmeChallengeDnsName, challenge, TimeSpan.FromSeconds(1));
+                }
+            }
+        }
+
+        async Task CleanupDnsChallenges(string[] domains)
+        {
+            foreach (var domain in domains)
+            {
+                var zone = await dnsimple!.GetZone(domain);
+
+                var records = (await zone!.GetRecords()).Where(r => r.Type == RecordType.TXT.Type && r.Name == acmeChallengeDnsName).ToArray();
+
+                foreach(var record in records)
+                {
+                    await record.Delete();
+                }
             }
         }
     }
