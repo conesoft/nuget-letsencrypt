@@ -5,7 +5,7 @@
     <LangVersion>8.0</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace>Conesoft.LetsEncrypt</RootNamespace>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>davepermen</Authors>
     <Company>Conesoft</Company>
   </PropertyGroup>
@@ -13,7 +13,7 @@
   <ItemGroup>
     <PackageReference Include="Certes" Version="2.3.4" />
     <PackageReference Include="Conesoft.DNSimple" Version="1.0.6" />
-    <PackageReference Include="Conesoft.Files" Version="1.0.11" />
+    <PackageReference Include="Conesoft.Files" Version="1.0.12" />
   </ItemGroup>
 
 </Project>
