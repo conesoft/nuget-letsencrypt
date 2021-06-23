@@ -5,15 +5,24 @@
     <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace>Conesoft.LetsEncrypt</RootNamespace>
-    <Version>1.0.4</Version>
+  </PropertyGroup>
+  
+  <PropertyGroup>
+    <Version>1.0.5</Version>
     <Authors>davepermen</Authors>
     <Company>Conesoft</Company>
     <PackageIcon>Conesoft.forNuget.x256.png</PackageIcon>
     <PackageProjectUrl>https://github.com/conesoft/letsencrypt</PackageProjectUrl>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Letsencrypt Wildcard Generation using Dnsimple</Description>
+    <PackageTags>library dotnet-core</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="Conesoft.forNuget.x256.png" Pack="true" PackagePath="" />
+    <None Include="Conesoft.forNuget.x256.png" Pack="true" PackagePath="\" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
