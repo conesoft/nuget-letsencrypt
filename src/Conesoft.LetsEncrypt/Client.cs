@@ -84,6 +84,38 @@ namespace Conesoft.LetsEncrypt
 
             return pfx;
         }
+        public async Task<byte[]> CreateCertificateFor(string domain, string certificatePassword, CertificateInformation information)
+        {
+            var order = await acme.NewOrder(new[] { domain });
+
+            var authorizations = (await order.Authorizations()).ToArray();
+
+            var challenges = await Task.WhenAll(authorizations.Select(async a => await a.Dns()));
+
+            await AddDnsChallenge(domain, challenges.Select(challenge => acme.AccountKey.DnsTxt(challenge.Token)).ToArray());
+
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
+            var results = await Task.WhenAll(challenges.Select(async c => await c.Validate()));
+
+            await CleanupDnsChallenge(domain);
+
+            var privateKey = KeyFactory.NewKey(KeyAlgorithm.ES256);
+
+            var certificate = await order.Generate(new CsrInfo
+            {
+                CountryName = information.CountryName,
+                State = information.State,
+                Locality = information.Locality,
+                Organization = information.Organization,
+                OrganizationUnit = information.OrganizationUnit,
+                CommonName = domain
+            }, privateKey);
+
+            var pfx = certificate.ToPfx(privateKey).Build(domain, certificatePassword);
+
+            return pfx;
+        }
 
         private async Task AddDnsChallenges(string[] domains, string[] challenges)
         {
@@ -95,6 +127,20 @@ namespace Conesoft.LetsEncrypt
                 {
                     await zone.AddRecord(RecordType.TXT, acmeChallengeDnsName, challenge, TimeSpan.FromSeconds(1));
                 }
+            }
+        }
+
+        private async Task AddDnsChallenge(string domain, string[] challenges)
+        {
+            var d = string.Join('.', domain.Split('.').TakeLast(2));
+            var s = domain.Split('.').SkipLast(2).FirstOrDefault() ?? "";
+            var challengeName = s.Length > 0 ? $"{acmeChallengeDnsName}.{s}" : acmeChallengeDnsName;
+
+            var zone = await dnsimple.GetZone(d);
+
+            foreach (var challenge in challenges)
+            {
+                await zone.AddRecord(RecordType.TXT, challengeName, challenge, TimeSpan.FromSeconds(1));
             }
         }
 
@@ -110,6 +156,22 @@ namespace Conesoft.LetsEncrypt
                 {
                     await record.Delete();
                 }
+            }
+        }
+
+        private async Task CleanupDnsChallenge(string domain)
+        {
+            var d = string.Join('.', domain.Split('.').TakeLast(2));
+            var s = domain.Split('.').SkipLast(2).FirstOrDefault() ?? "";
+            var challengeName = s.Length > 0 ? $"{acmeChallengeDnsName}.{s}" : acmeChallengeDnsName;
+
+            var zone = await dnsimple.GetZone(d);
+
+            var records = (await zone.GetRecords()).Where(r => r.Type == RecordType.TXT.Type && r.Name == challengeName).ToArray();
+
+            foreach (var record in records)
+            {
+                await record.Delete();
             }
         }
 
