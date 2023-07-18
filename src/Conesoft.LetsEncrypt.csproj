@@ -7,7 +7,7 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <Version>1.0.7</Version>
+    <Version>1.1.0</Version>
     <Authors>davepermen</Authors>
     <Company>Conesoft</Company>
     <PackageIcon>Conesoft.forNuget.x256.png</PackageIcon>
@@ -26,7 +26,7 @@
 
   <ItemGroup>
     <PackageReference Include="Certes" Version="3.0.4" />
-    <PackageReference Include="Conesoft.DNSimple" Version="1.0.8" />
+    <PackageReference Include="Conesoft.DNSimple" Version="1.1.0" />
     <PackageReference Include="Conesoft.Files" Version="1.7.7" />
   </ItemGroup>
 

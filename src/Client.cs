@@ -25,7 +25,7 @@ namespace Conesoft.LetsEncrypt
             this.account = account;
         }
 
-        public static async Task<Client> Login(string mail, Func<HttpClient> httpClientGenerator, string dnsimpleToken, Account? account = null, bool production = true)
+        public static async Task<Client?> Login(string mail, Func<HttpClient> httpClientGenerator, string dnsimpleToken, Account? account = null, bool production = true)
         {
             var acmeHttpClient = new AcmeHttpClient(GetServer(production), httpClientGenerator());
 
@@ -49,7 +49,7 @@ namespace Conesoft.LetsEncrypt
 
             var dnsimple = await client.GetAccount(mail);
 
-            return new Client(acme, dnsimple, account);
+            return dnsimple != null ? new Client(acme, dnsimple, account) : null;
         }
 
         public async Task<byte[]> CreateWildcardCertificateFor(string[] domains, string certificatePassword, CertificateInformation information)
@@ -123,9 +123,12 @@ namespace Conesoft.LetsEncrypt
             {
                 var zone = await dnsimple.GetZone(domain);
 
-                foreach (var challenge in challenges)
+                if (zone != null)
                 {
-                    await zone.AddRecord(RecordType.TXT, acmeChallengeDnsName, challenge, TimeSpan.FromSeconds(1));
+                    foreach (var challenge in challenges)
+                    {
+                        await zone.AddRecord(RecordType.TXT, acmeChallengeDnsName, challenge, TimeSpan.FromSeconds(1));
+                    }
                 }
             }
         }
@@ -138,9 +141,12 @@ namespace Conesoft.LetsEncrypt
 
             var zone = await dnsimple.GetZone(d);
 
-            foreach (var challenge in challenges)
+            if (zone != null)
             {
-                await zone.AddRecord(RecordType.TXT, challengeName, challenge, TimeSpan.FromSeconds(1));
+                foreach (var challenge in challenges)
+                {
+                    await zone.AddRecord(RecordType.TXT, challengeName, challenge, TimeSpan.FromSeconds(1));
+                }
             }
         }
 
@@ -150,11 +156,14 @@ namespace Conesoft.LetsEncrypt
             {
                 var zone = await dnsimple.GetZone(domain);
 
-                var records = (await zone.GetRecords()).Where(r => r.Type == RecordType.TXT.Type && r.Name == acmeChallengeDnsName).ToArray();
-
-                foreach (var record in records)
+                if (zone != null)
                 {
-                    await record.Delete();
+                    var records = (await zone.GetRecords()).Where(r => r.Type == RecordType.TXT.Type && r.Name == acmeChallengeDnsName).ToArray();
+
+                    foreach (var record in records)
+                    {
+                        await record.Delete();
+                    }
                 }
             }
         }
@@ -167,11 +176,14 @@ namespace Conesoft.LetsEncrypt
 
             var zone = await dnsimple.GetZone(d);
 
-            var records = (await zone.GetRecords()).Where(r => r.Type == RecordType.TXT.Type && r.Name == challengeName).ToArray();
-
-            foreach (var record in records)
+            if (zone != null)
             {
-                await record.Delete();
+                var records = (await zone.GetRecords()).Where(r => r.Type == RecordType.TXT.Type && r.Name == challengeName).ToArray();
+
+                foreach (var record in records)
+                {
+                    await record.Delete();
+                }
             }
         }
 
