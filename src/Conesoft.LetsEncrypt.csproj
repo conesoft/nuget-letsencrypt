@@ -1,18 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-    <LangVersion>9.0</LangVersion>
+    <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <RootNamespace>Conesoft.LetsEncrypt</RootNamespace>
   </PropertyGroup>
   
   <PropertyGroup>
-    <Version>1.0.6</Version>
+    <Version>1.0.7</Version>
     <Authors>davepermen</Authors>
     <Company>Conesoft</Company>
     <PackageIcon>Conesoft.forNuget.x256.png</PackageIcon>
-    <PackageProjectUrl>https://github.com/conesoft/letsencrypt</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/conesoft/nuget-letsencrypt</PackageProjectUrl>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>Letsencrypt Wildcard Generation using Dnsimple</Description>
@@ -21,14 +20,14 @@
 
   <ItemGroup>
     <None Include="Conesoft.forNuget.x256.png" Pack="true" PackagePath="\" />
-    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
-    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\LICENSE" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Certes" Version="2.3.4" />
+    <PackageReference Include="Certes" Version="3.0.4" />
     <PackageReference Include="Conesoft.DNSimple" Version="1.0.8" />
-    <PackageReference Include="Conesoft.Files" Version="1.5.21" />
+    <PackageReference Include="Conesoft.Files" Version="1.7.7" />
   </ItemGroup>
 
 </Project>
