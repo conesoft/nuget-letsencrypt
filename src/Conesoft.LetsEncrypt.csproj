@@ -27,7 +27,7 @@
   <ItemGroup>
     <PackageReference Include="Certes" Version="3.0.4" />
     <PackageReference Include="Conesoft.DNSimple" Version="2.0.0" />
-    <PackageReference Include="Conesoft.Files" Version="3.0.5" />
+    <PackageReference Include="Conesoft.Files" Version="3.0.7" />
   </ItemGroup>
 
 </Project>
